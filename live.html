@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AK Pack — Live Feed</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body { overflow-y: auto; overflow-x: hidden; }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    background: rgba(11,15,30,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 100;
+  }
+
+  .logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    width: 34px;
+    height: 34px;
+    background: var(--accent-red);
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: var(--shadow-glow-red);
+  }
+
+  .logo-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 0.08em;
+  }
+
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(224,48,48,0.12);
+    border: 1px solid rgba(224,48,48,0.25);
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--accent-red);
+  }
+
+  .stats-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .strip-stat {
+    text-align: center;
+  }
+
+  .strip-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    line-height: 1;
+  }
+
+  .strip-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'Barlow Condensed', sans-serif;
+    margin-top: 2px;
+  }
+
+  .strip-stat:nth-child(1) .strip-val { color: var(--accent-green); }
+  .strip-stat:nth-child(2) .strip-val { color: var(--accent-red); }
+  .strip-stat:nth-child(3) .strip-val { color: var(--text-secondary); }
+
+  .feed-container {
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 80px;
+  }
+
+  .feed-section-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 4px 0;
+  }
+
+  /* FEED CARD */
+  .feed-card {
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: cardSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes cardSlideIn {
+    from { opacity: 0; transform: translateY(-16px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .feed-card:active { transform: scale(0.98); }
+
+  .feed-card.green {
+    background: rgba(0,200,150,0.06);
+    border-color: rgba(0,200,150,0.2);
+  }
+
+  .feed-card.yellow {
+    background: rgba(255,184,0,0.06);
+    border-color: rgba(255,184,0,0.2);
+  }
+
+  .feed-card.red {
+    background: rgba(224,48,48,0.06);
+    border-color: rgba(224,48,48,0.2);
+  }
+
+  .card-main {
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .card-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .feed-card.green .card-status-dot { background: var(--accent-green); box-shadow: 0 0 8px rgba(0,200,150,0.5); }
+  .feed-card.yellow .card-status-dot { background: var(--accent-yellow); box-shadow: 0 0 8px rgba(255,184,0,0.5); }
+  .feed-card.red .card-status-dot { background: var(--accent-red); box-shadow: 0 0 8px rgba(224,48,48,0.5); }
+
+  .card-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .card-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-meta {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 1px;
+  }
+
+  .card-meta span {
+    color: var(--text-muted);
+    margin: 0 4px;
+  }
+
+  .card-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+    flex-shrink: 0;
+  }
+
+  .card-action {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+  }
+
+  .feed-card.green .card-action { color: var(--accent-green); }
+  .feed-card.yellow .card-action { color: var(--accent-yellow); }
+  .feed-card.red .card-action { color: var(--accent-red); }
+
+  .card-time {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  /* EXPANDED DETAILS */
+  .card-details {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+    border-top: 0 solid var(--border);
+  }
+
+  .card-details.open {
+    max-height: 200px;
+    border-top-width: 1px;
+  }
+
+  .card-details-inner {
+    padding: 12px 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .detail-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .detail-row-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .detail-row-val {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+  }
+
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    letter-spacing: 0.05em;
+  }
+
+  /* REFRESH INDICATOR */
+  .refresh-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .refresh-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+
+  .refresh-progress {
+    height: 2px;
+    background: var(--border);
+    border-radius: 1px;
+    overflow: hidden;
+    width: 60px;
+  }
+
+  .refresh-fill {
+    height: 100%;
+    background: var(--accent-red);
+    border-radius: 1px;
+    animation: refill 8s linear infinite;
+  }
+
+  @keyframes refill {
+    from { width: 100%; }
+    to { width: 0%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo-wrap">
+    <div class="logo-icon">🐺</div>
+    <div class="logo-text">Live Feed</div>
+  </div>
+  <div class="live-badge">
+    <span class="live-dot"></span>
+    LIVE
+  </div>
+</div>
+
+<!-- STATS STRIP -->
+<div class="stats-strip">
+  <div class="strip-stat">
+    <div class="strip-val" id="insideCount">0</div>
+    <div class="strip-label">Inside</div>
+  </div>
+  <div class="strip-stat">
+    <div class="strip-val" id="checkinCount">0</div>
+    <div class="strip-label">Check-ins</div>
+  </div>
+  <div class="strip-stat">
+    <div class="strip-val" id="exitCount">0</div>
+    <div class="strip-label">Exits</div>
+  </div>
+</div>
+
+<!-- FEED -->
+<div class="feed-container" id="feedContainer">
+  <div class="feed-section-title">Today's Activity</div>
+  <div class="empty-state" id="emptyState">
+    <div class="empty-icon">🐺</div>
+    <div class="empty-text">Waiting for members...</div>
+  </div>
+</div>
+
+<!-- REFRESH BAR -->
+<div class="refresh-bar">
+  <div class="refresh-text">Auto refreshes every 8s</div>
+  <div class="refresh-progress">
+    <div class="refresh-fill" id="refreshFill"></div>
+  </div>
+</div>
+
+<script>
+  const SHEET_ID = localStorage.getItem('ak_sheet_id') || '';
+  let allRecords = [];
+
+  // Sample data for demo
+  const demoData = [
+    { name: 'John Mathew', id: '42', time: '06:01 PM', action: 'Entry', status: 'active', pkg: 'Monthly', expiry: '31/03/2026', daysLeft: 20, contact: '+971 50 123 4567' },
+    { name: 'Sara Ahmed', id: '17', time: '05:58 PM', action: 'Exit', status: 'warning', pkg: 'Monthly', expiry: '15/03/2026', daysLeft: 4, contact: '+971 55 987 6543' },
+    { name: 'Mike Johnson', id: '31', time: '05:45 PM', action: 'Entry', status: 'active', pkg: 'Quarterly', expiry: '30/06/2026', daysLeft: 111, contact: '+971 52 456 7890' },
+    { name: 'Riya Patel', id: '08', time: '05:30 PM', action: 'Entry', status: 'expired', pkg: 'Monthly', expiry: '05/03/2026', daysLeft: 0, contact: '+971 56 321 0987' },
+    { name: 'Omar Hassan', id: '55', time: '05:15 PM', action: 'Exit', status: 'active', pkg: 'Annual', expiry: '01/01/2027', daysLeft: 296, contact: '+971 50 111 2222' },
+  ];
+
+  function getCardColor(status) {
+    if (status === 'expired') return 'red';
+    if (status === 'warning') return 'yellow';
+    return 'green';
+  }
+
+  function renderCards(records) {
+    const container = document.getElementById('feedContainer');
+    const empty = document.getElementById('emptyState');
+
+    // Remove old cards (keep title and empty)
+    container.querySelectorAll('.feed-card').forEach(c => c.remove());
+
+    if (records.length === 0) {
+      empty.style.display = 'block';
+      return;
+    }
+
+    empty.style.display = 'none';
+    let checkins = 0, exits = 0;
+    const insideSet = new Set();
+
+    records.forEach((rec, i) => {
+      const color = getCardColor(rec.status);
+      if (rec.action === 'Entry') { checkins++; insideSet.add(rec.id); }
+      if (rec.action === 'Exit') { exits++; insideSet.delete(rec.id); }
+
+      const card = document.createElement('div');
+      card.className = `feed-card ${color}`;
+      card.style.animationDelay = `${i * 0.05}s`;
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-status-dot"></div>
+          <div class="card-info">
+            <div class="card-name">${rec.name}</div>
+            <div class="card-meta">ID: ${rec.id} <span>·</span> ${rec.pkg || '—'}</div>
+          </div>
+          <div class="card-right">
+            <div class="card-action">${rec.action === 'Entry' ? '✅ ENTRY' : '🚪 EXIT'}</div>
+            <div class="card-time">${rec.time}</div>
+          </div>
+        </div>
+        <div class="card-details">
+          <div class="card-details-inner">
+            <div class="detail-row">
+              <div class="detail-row-label">Package</div>
+              <div class="detail-row-val">${rec.pkg || '—'}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-label">Expiry</div>
+              <div class="detail-row-val">${rec.expiry || '—'}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-label">Days Left</div>
+              <div class="detail-row-val" style="color:${color === 'red' ? 'var(--accent-red)' : color === 'yellow' ? 'var(--accent-yellow)' : 'var(--accent-green)'}">${rec.daysLeft > 0 ? rec.daysLeft + ' days' : 'EXPIRED'}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-row-label">Contact</div>
+              <div class="detail-row-val">${rec.contact || '—'}</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      card.querySelector('.card-main').addEventListener('click', () => {
+        const details = card.querySelector('.card-details');
+        details.classList.toggle('open');
+      });
+
+      container.appendChild(card);
+    });
+
+    document.getElementById('checkinCount').textContent = checkins;
+    document.getElementById('exitCount').textContent = exits;
+    document.getElementById('insideCount').textContent = insideSet.size;
+  }
+
+  function loadFeed() {
+    if (!SHEET_ID) {
+      renderCards(demoData);
+      return;
+    }
+
+    const today = new Date().toLocaleDateString('en-GB');
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=Attendance&tq=select%20*`;
+    const cb = 'akLiveCb_' + Date.now();
+
+    window[cb] = function(data) {
+      try {
+        const rows = data.table.rows || [];
+        const todayRows = rows
+          .filter(r => {
+            const d = r.c[0]?.f || r.c[0]?.v || '';
+            return d === today || d.includes(today.split('/').reverse().join('-'));
+          })
+          .reverse()
+          .map(r => ({
+            name: r.c[3]?.v || '—',
+            id: r.c[2]?.v || '—',
+            time: r.c[1]?.v || '—',
+            action: r.c[4]?.v || '—',
+            status: 'active',
+            pkg: '—', expiry: '—', daysLeft: '—', contact: '—'
+          }));
+
+        renderCards(todayRows.length ? todayRows : demoData);
+      } catch(e) { renderCards(demoData); }
+      delete window[cb];
+    };
+
+    const script = document.createElement('script');
+    script.src = url + `&callback=${cb}&tqx=responseHandler:${cb}`;
+    document.head.appendChild(script);
+  }
+
+  loadFeed();
+  setInterval(() => {
+    loadFeed();
+    // Restart animation
+    const fill = document.getElementById('refreshFill');
+    fill.style.animation = 'none';
+    fill.offsetHeight;
+    fill.style.animation = 'refill 8s linear infinite';
+  }, 8000);
+</script>
+</body>
+</html>

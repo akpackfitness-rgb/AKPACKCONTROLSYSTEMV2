@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AK Pack Fitness — Admin</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  html, body { overflow: hidden; height: 100%; }
+
+  /* ===== LAYOUT ===== */
+  .app {
+    display: flex;
+    height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar {
+    width: var(--sidebar-width);
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 0;
+    gap: 4px;
+    flex-shrink: 0;
+    transition: width 0.3s ease;
+    overflow: hidden;
+    z-index: 10;
+  }
+
+  .sidebar-logo {
+    width: 40px;
+    height: 40px;
+    background: var(--accent-red);
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: var(--shadow-glow-red);
+    margin-bottom: 16px;
+    flex-shrink: 0;
+  }
+
+  .nav-item {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 19px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .nav-item:hover {
+    background: var(--bg-card);
+    color: var(--text-primary);
+  }
+
+  .nav-item.active {
+    background: rgba(224,48,48,0.15);
+    color: var(--accent-red);
+    box-shadow: 0 0 12px rgba(224,48,48,0.15);
+  }
+
+  .nav-spacer { flex: 1; }
+
+  /* ===== MAIN CONTENT ===== */
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    height: var(--topbar-height);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    background: rgba(11,15,30,0.8);
+    backdrop-filter: blur(12px);
+    flex-shrink: 0;
+  }
+
+  .page-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 0.06em;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .filter-pills {
+    display: flex;
+    gap: 6px;
+  }
+
+  .filter-pill {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    background: transparent;
+    transition: all 0.2s;
+  }
+
+  .filter-pill.active {
+    background: var(--accent-red);
+    border-color: var(--accent-red);
+    color: white;
+  }
+
+  .live-time {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .kiosk-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .kiosk-btn:hover { border-color: var(--accent-red); color: var(--accent-red); }
+
+  /* PAGE CONTENT */
+  .page-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: none;
+  }
+
+  .page-content.active { display: block; }
+
+  /* ===== DASHBOARD PAGE ===== */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 280px;
+    grid-template-rows: auto auto;
+    gap: 16px;
+    height: 100%;
+  }
+
+  /* Graph card */
+  .graph-card {
+    grid-column: 1 / 3;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .graph-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .day-pills { display: flex; gap: 4px; }
+
+  .day-pill {
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    background: transparent;
+    transition: all 0.2s;
+  }
+
+  .day-pill.active {
+    background: var(--accent-red);
+    border-color: var(--accent-red);
+    color: white;
+  }
+
+  .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 100px;
+  }
+
+  .bar-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  .bar {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    background: rgba(224,48,48,0.2);
+    transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s;
+    cursor: pointer;
+    min-height: 4px;
+  }
+
+  .bar.peak { background: var(--accent-red); box-shadow: 0 0 10px rgba(224,48,48,0.4); }
+  .bar:hover { background: var(--accent-red); }
+  .bar-label { font-size: 9px; color: var(--text-muted); font-family: 'Barlow Condensed', sans-serif; }
+
+  /* Member status cards (right col) */
+  .right-col {
+    grid-row: 1 / 3;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .member-status-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+
+  .msc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .msc-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 42px;
+    line-height: 1;
+  }
+
+  .msc-active .msc-val { color: var(--accent-green); }
+  .msc-warning .msc-val { color: var(--accent-yellow); }
+  .msc-expired .msc-val { color: var(--accent-red); }
+  .msc-inside .msc-val { color: #60a5fa; }
+
+  .msc-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  /* Recent checkins */
+  .recent-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .recent-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    flex: 1;
+    margin-top: 10px;
+  }
+
+  .recent-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .recent-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .recent-info { flex: 1; min-width: 0; }
+  .recent-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .recent-meta { font-size: 11px; color: var(--text-muted); }
+  .recent-time {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  /* Bottom stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+
+  .stat-card-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 38px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  /* ===== HISTORY PAGE ===== */
+  .history-toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .history-input {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 14px;
+    color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .history-input:focus { border-color: var(--accent-red); }
+
+  .history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+  }
+
+  .history-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .history-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+
+  .history-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .history-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .history-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .history-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  /* ===== MEMBERS PAGE ===== */
+  .members-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+
+  .member-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    transition: all 0.2s;
+  }
+
+  .member-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+
+  .member-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .member-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-red), #ff6b6b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    color: white;
+  }
+
+  .member-info { flex: 1; margin-left: 12px; }
+
+  .member-card-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+
+  .member-card-id {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ===== WORKOUT PAGE ===== */
+  .workout-toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+
+  .workout-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 6px;
+  }
+
+  .workout-table th {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-align: left;
+    padding: 6px 12px;
+  }
+
+  .workout-table td {
+    background: var(--bg-card);
+    padding: 12px;
+    font-size: 13px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .workout-table td:first-child {
+    border-left: 1px solid var(--border);
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  }
+
+  .workout-table td:last-child {
+    border-right: 1px solid var(--border);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+
+  /* ===== SETTINGS PAGE ===== */
+  .settings-wrap {
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .settings-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .settings-section-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .settings-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  .settings-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .settings-input {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  .settings-input:focus { border-color: var(--accent-red); }
+
+  .save-btn {
+    background: var(--accent-red);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: var(--radius-sm);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: var(--shadow-glow-red);
+  }
+
+  .save-btn:hover { background: #ff3d3d; transform: translateY(-1px); }
+
+  /* ===== MOBILE NAV ===== */
+  .mobile-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    padding: 8px 0 12px;
+    justify-content: space-around;
+    z-index: 100;
+  }
+
+  .mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+    border: none;
+    background: none;
+  }
+
+  .mobile-nav-icon { font-size: 20px; }
+
+  .mobile-nav-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .mobile-nav-item.active .mobile-nav-label { color: var(--accent-red); }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .mobile-nav { display: flex; }
+    .page-content { padding-bottom: 80px; }
+    .dashboard-grid {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto;
+    }
+    .graph-card { grid-column: 1 / 3; }
+    .right-col { grid-column: 1 / 3; flex-direction: row; flex-wrap: wrap; }
+    .member-status-card { flex: 1; min-width: 120px; }
+  }
+
+  @media (max-width: 600px) {
+    .dashboard-grid { grid-template-columns: 1fr; }
+    .graph-card { grid-column: auto; }
+    .right-col { grid-column: auto; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .filter-pills { display: none; }
+    .topbar { padding: 0 16px; }
+    .page-content { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">🐺</div>
+    <button class="nav-item active" onclick="showPage('dashboard', this)" title="Dashboard">🏠</button>
+    <button class="nav-item" onclick="showPage('history', this)" title="History">📋</button>
+    <button class="nav-item" onclick="showPage('members', this)" title="Members">👥</button>
+    <button class="nav-item" onclick="showPage('workout', this)" title="Training Plans">💪</button>
+    <div class="nav-spacer"></div>
+    <button class="nav-item" onclick="showPage('notifications', this)" title="Notifications">🔔</button>
+    <button class="nav-item" onclick="showPage('settings', this)" title="Settings">⚙️</button>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-content">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="page-title" id="pageTitle">Live Monitor</div>
+      <div class="topbar-right">
+        <div class="filter-pills" id="filterPills">
+          <button class="filter-pill active" onclick="setFilter(this,'today')">Today</button>
+          <button class="filter-pill" onclick="setFilter(this,'week')">This Week</button>
+          <button class="filter-pill" onclick="setFilter(this,'month')">This Month</button>
+        </div>
+        <div class="live-time">
+          <span class="live-dot"></span>
+          <span id="liveTime">--:-- --</span>
+        </div>
+        <a href="index.html" class="kiosk-btn">📱 Kiosk</a>
+      </div>
+    </div>
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page-content active" id="page-dashboard">
+      <div class="dashboard-grid">
+
+        <!-- Peak Hours Graph -->
+        <div class="graph-card">
+          <div class="graph-header">
+            <div class="card-title">📊 Peak Hours</div>
+            <div class="day-pills">
+              <button class="day-pill active" onclick="setDay(this,'Mon')">Mon</button>
+              <button class="day-pill" onclick="setDay(this,'Tue')">Tue</button>
+              <button class="day-pill" onclick="setDay(this,'Wed')">Wed</button>
+              <button class="day-pill" onclick="setDay(this,'Thu')">Thu</button>
+              <button class="day-pill" onclick="setDay(this,'Fri')">Fri</button>
+              <button class="day-pill" onclick="setDay(this,'Sat')">Sat</button>
+            </div>
+          </div>
+          <div class="bar-chart" id="barChart"></div>
+        </div>
+
+        <!-- RIGHT COL: Member Status Cards -->
+        <div class="right-col">
+          <div class="member-status-card msc-inside">
+            <div class="msc-header">
+              <div class="card-title">👥 Inside Now</div>
+              <span class="live-dot"></span>
+            </div>
+            <div class="msc-val" id="insideCount">0</div>
+            <div class="msc-label">members currently inside</div>
+          </div>
+          <div class="member-status-card msc-active">
+            <div class="msc-header"><div class="card-title">🟢 Active Members</div></div>
+            <div class="msc-val" id="activeCount">—</div>
+            <div class="msc-label">valid memberships</div>
+          </div>
+          <div class="member-status-card msc-warning">
+            <div class="msc-header"><div class="card-title">🟡 Expiring Soon</div></div>
+            <div class="msc-val" id="warningCount">—</div>
+            <div class="msc-label">within 7 days</div>
+          </div>
+          <div class="member-status-card msc-expired">
+            <div class="msc-header"><div class="card-title">🔴 Expired</div></div>
+            <div class="msc-val" id="expiredCount">—</div>
+            <div class="msc-label">need renewal</div>
+          </div>
+
+          <!-- Recent Check-ins -->
+          <div class="recent-card">
+            <div class="card-title">⚡ Recent Activity</div>
+            <div class="recent-list" id="recentList">
+              <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:16px;">Loading...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-row" style="grid-column:1/3">
+          <div class="stat-card">
+            <div class="card-title">☑️ Check-ins Today</div>
+            <div class="stat-card-val" style="color:var(--accent-red)" id="checkinCount">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="card-title">🚪 Exits Today</div>
+            <div class="stat-card-val" style="color:var(--text-secondary)" id="exitCount">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="card-title">⏰ Peak Hour</div>
+            <div class="stat-card-val" style="color:var(--accent-yellow)" id="peakHour">6 PM</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- HISTORY PAGE -->
+    <div class="page-content" id="page-history">
+      <div class="history-toolbar">
+        <input type="date" class="history-input" id="historyDate" onchange="filterHistory()">
+        <input type="text" class="history-input" id="historySearch" placeholder="Search name or ID..." oninput="filterHistory()" style="flex:1;min-width:150px">
+        <select class="history-input" id="historyStatus" onchange="filterHistory()">
+          <option value="">All Actions</option>
+          <option value="Entry">Entry</option>
+          <option value="Exit">Exit</option>
+        </select>
+      </div>
+      <div class="history-grid" id="historyGrid">
+        <div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;text-align:center;padding:40px;">Loading history...</div>
+      </div>
+    </div>
+
+    <!-- MEMBERS PAGE -->
+    <div class="page-content" id="page-members">
+      <div style="display:flex;gap:10px;margin-bottom:16px;">
+        <input type="text" class="history-input" id="memberSearch" placeholder="Search members..." oninput="filterMembers()" style="flex:1">
+        <select class="history-input" id="memberFilter" onchange="filterMembers()">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="warning">Expiring</option>
+          <option value="expired">Expired</option>
+        </select>
+      </div>
+      <div class="members-grid" id="membersGrid">
+        <div style="color:var(--text-muted);font-size:13px;grid-column:1/-1;text-align:center;padding:40px;">Loading members...</div>
+      </div>
+    </div>
+
+    <!-- WORKOUT PAGE -->
+    <div class="page-content" id="page-workout">
+      <div class="workout-toolbar">
+        <input type="text" class="history-input" id="workoutSearch" placeholder="Enter Member ID or Name..." oninput="filterWorkout()" style="width:240px">
+        <select class="history-input" id="workoutPlan" onchange="filterWorkout()">
+          <option value="">All Plans</option>
+          <option value="Beginner">Beginner</option>
+          <option value="Intermediate">Intermediate</option>
+          <option value="Advanced">Advanced</option>
+          <option value="Custom">Custom</option>
+        </select>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="workout-table">
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Plan</th>
+              <th>Day</th>
+              <th>Exercise</th>
+              <th>Sets</th>
+              <th>Reps</th>
+              <th>Rest</th>
+              <th>Muscle</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="workoutBody">
+            <tr><td colspan="9" style="color:var(--text-muted);text-align:center;padding:40px;">Loading workouts...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS PAGE -->
+    <div class="page-content" id="page-notifications">
+      <div style="display:flex;flex-direction:column;gap:10px;" id="notifList">
+        <div style="color:var(--text-muted);font-size:13px;text-align:center;padding:40px;">Loading notifications...</div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div class="page-content" id="page-settings">
+      <div class="settings-wrap">
+        <div class="settings-section">
+          <div class="settings-section-title">⚙️ Google Sheets Config</div>
+          <div class="settings-field">
+            <div class="settings-label">Spreadsheet ID</div>
+            <input type="text" class="settings-input" id="settingSheetId" placeholder="Enter your Google Sheet ID">
+          </div>
+          <div class="settings-field">
+            <div class="settings-label">Apps Script URL</div>
+            <input type="text" class="settings-input" id="settingScriptUrl" placeholder="Enter your Apps Script Web App URL">
+          </div>
+          <button class="save-btn" onclick="saveSettings()">💾 Save Config</button>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">🔐 Security</div>
+          <div class="settings-field">
+            <div class="settings-label">Admin Password</div>
+            <input type="password" class="settings-input" id="settingPassword" placeholder="Change admin password">
+          </div>
+          <button class="save-btn" onclick="savePassword()">🔒 Update Password</button>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">📱 Quick Links</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="index.html" class="kiosk-btn" style="padding:10px 16px;">📱 Kiosk Screen</a>
+            <a href="live.html" class="kiosk-btn" style="padding:10px 16px;">🔴 Live Feed</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MOBILE NAV -->
+<div class="mobile-nav">
+  <button class="mobile-nav-item active" onclick="showPage('dashboard', this)">
+    <span class="mobile-nav-icon">🏠</span>
+    <span class="mobile-nav-label">Dashboard</span>
+  </button>
+  <button class="mobile-nav-item" onclick="showPage('history', this)">
+    <span class="mobile-nav-icon">📋</span>
+    <span class="mobile-nav-label">History</span>
+  </button>
+  <button class="mobile-nav-item" onclick="showPage('members', this)">
+    <span class="mobile-nav-icon">👥</span>
+    <span class="mobile-nav-label">Members</span>
+  </button>
+  <button class="mobile-nav-item" onclick="showPage('workout', this)">
+    <span class="mobile-nav-icon">💪</span>
+    <span class="mobile-nav-label">Workout</span>
+  </button>
+  <button class="mobile-nav-item" onclick="showPage('settings', this)">
+    <span class="mobile-nav-icon">⚙️</span>
+    <span class="mobile-nav-label">Settings</span>
+  </button>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  const SHEET_ID = localStorage.getItem('ak_sheet_id') || '';
+  const SCRIPT_URL = localStorage.getItem('ak_script_url') || '';
+
+  // Load saved settings into fields
+  document.getElementById('settingSheetId').value = SHEET_ID;
+  document.getElementById('settingScriptUrl').value = SCRIPT_URL;
+
+  // ===== CLOCK =====
+  function updateClock() {
+    const now = new Date();
+    let h = now.getHours();
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    document.getElementById('liveTime').textContent = `${h}:${m} ${ampm}`;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ===== PAGE NAVIGATION =====
+  const pageTitles = {
+    dashboard: 'Live Monitor',
+    history: 'Attendance History',
+    members: 'Members',
+    workout: 'Training Plans',
+    notifications: 'Notifications',
+    settings: 'Settings'
+  };
+
+  function showPage(name, el) {
+    document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    if (el) el.classList.add('active');
+    document.getElementById('pageTitle').textContent = pageTitles[name] || name;
+
+    const showPills = name === 'dashboard';
+    document.getElementById('filterPills').style.display = showPills ? 'flex' : 'none';
+
+    // Load data for page
+    if (name === 'history') loadHistory();
+    if (name === 'members') loadMembers();
+    if (name === 'workout') loadWorkout();
+    if (name === 'notifications') loadNotifications();
+  }
+
+  // ===== FILTER PILLS =====
+  function setFilter(el, period) {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    loadDashboard(period);
+  }
+
+  // ===== BAR CHART =====
+  const sampleData = {
+    Mon: [2,5,8,12,9,7,6,8,10,14,18,22,19,15,12,8],
+    Tue: [1,4,7,10,8,6,5,7,9,13,17,20,18,14,11,7],
+    Wed: [3,6,9,13,10,8,7,9,11,15,19,23,20,16,13,9],
+    Thu: [2,5,8,11,9,7,6,8,10,14,18,21,19,15,12,8],
+    Fri: [4,7,10,14,11,9,8,10,12,16,20,24,21,17,14,10],
+    Sat: [8,14,20,18,15,12,10,8,7,6,5,4,3,2,1,0],
+  };
+  const hours = ['6AM','7AM','8AM','9AM','10AM','11AM','12PM','1PM','2PM','3PM','4PM','5PM','6PM','7PM','8PM','9PM'];
+
+  function renderChart(day) {
+    const data = sampleData[day] || sampleData['Mon'];
+    const max = Math.max(...data);
+    const chart = document.getElementById('barChart');
+    chart.innerHTML = '';
+    data.forEach((val, i) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'bar-wrap';
+      const bar = document.createElement('div');
+      bar.className = 'bar' + (val === max ? ' peak' : '');
+      bar.style.height = `${(val/max)*100}%`;
+      const label = document.createElement('div');
+      label.className = 'bar-label';
+      label.textContent = i % 2 === 0 ? hours[i] : '';
+      wrap.appendChild(bar); wrap.appendChild(label);
+      chart.appendChild(wrap);
+    });
+    // Update peak hour display
+    const peakIdx = data.indexOf(max);
+    document.getElementById('peakHour').textContent = hours[peakIdx] || '—';
+  }
+
+  function setDay(el, day) {
+    document.querySelectorAll('.day-pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    renderChart(day);
+  }
+
+  renderChart('Mon');
+
+  // ===== LOAD DASHBOARD =====
+  function loadDashboard(period = 'today') {
+    if (!SHEET_ID) { loadDashboardDemo(); return; }
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=Attendance&tq=select%20*`;
+    const cb = 'akDashCb_' + Date.now();
+    window[cb] = function(data) {
+      try {
+        const rows = data.table.rows || [];
+        const today = new Date().toLocaleDateString('en-GB');
+        let checkins = 0, exits = 0;
+        const insideSet = new Set();
+        const recent = [];
+
+        rows.reverse().forEach(r => {
+          const date = r.c[0]?.f || r.c[0]?.v || '';
+          const status = r.c[4]?.v || '';
+          const name = r.c[3]?.v || '—';
+          const time = r.c[1]?.v || '—';
+          const id = r.c[2]?.v || '—';
+
+          if (date === today) {
+            if (status === 'Entry') { checkins++; insideSet.add(id); }
+            if (status === 'Exit') { exits++; insideSet.delete(id); }
+            if (recent.length < 8) recent.push({ name, time, status, id });
+          }
+        });
+
+        document.getElementById('checkinCount').textContent = checkins;
+        document.getElementById('exitCount').textContent = exits;
+        document.getElementById('insideCount').textContent = insideSet.size;
+        renderRecentList(recent);
+        console.log('[AK Stats] Dashboard loaded:', {checkins, exits, inside: insideSet.size});
+      } catch(e) { loadDashboardDemo(); }
+      delete window[cb];
+    };
+    const s = document.createElement('script');
+    s.src = url + `&callback=${cb}&tqx=responseHandler:${cb}`;
+    document.head.appendChild(s);
+
+    loadMemberCounts();
+  }
+
+  function loadDashboardDemo() {
+    document.getElementById('checkinCount').textContent = '24';
+    document.getElementById('exitCount').textContent = '18';
+    document.getElementById('insideCount').textContent = '6';
+    document.getElementById('activeCount').textContent = '142';
+    document.getElementById('warningCount').textContent = '8';
+    document.getElementById('expiredCount').textContent = '5';
+    renderRecentList([
+      { name: 'John Mathew', time: '06:01 PM', status: 'Entry', id: '42' },
+      { name: 'Sara Ahmed', time: '05:58 PM', status: 'Exit', id: '17' },
+      { name: 'Mike Johnson', time: '05:45 PM', status: 'Entry', id: '31' },
+      { name: 'Riya Patel', time: '05:30 PM', status: 'Entry', id: '8' },
+      { name: 'Omar Hassan', time: '05:15 PM', status: 'Exit', id: '55' },
+    ]);
+  }
+
+  function renderRecentList(items) {
+    const list = document.getElementById('recentList');
+    if (!items.length) { list.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:20px;font-size:12px;">No activity today</div>'; return; }
+    list.innerHTML = items.map(item => `
+      <div class="recent-item">
+        <div class="recent-dot" style="background:${item.status === 'Entry' ? 'var(--accent-green)' : 'var(--accent-red)'}"></div>
+        <div class="recent-info">
+          <div class="recent-name">${item.name}</div>
+          <div class="recent-meta">ID: ${item.id}</div>
+        </div>
+        <div class="recent-time">${item.time}</div>
+      </div>
+    `).join('');
+  }
+
+  function loadMemberCounts() {
+    if (!SHEET_ID) return;
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=Members&tq=select%20*`;
+    const cb = 'akMCCb_' + Date.now();
+    window[cb] = function(data) {
+      try {
+        const rows = data.table.rows || [];
+        let active = 0, warning = 0, expired = 0;
+        rows.forEach(r => {
+          const expiry = r.c[3]?.f || r.c[3]?.v || '';
+          const parts = expiry.split('/');
+          if (parts.length === 3) {
+            const expDate = new Date(parts[2], parts[1]-1, parts[0]);
+            const diff = Math.ceil((expDate - new Date()) / (1000*60*60*24));
+            if (diff <= 0) expired++;
+            else if (diff <= 7) warning++;
+            else active++;
+          }
+        });
+        document.getElementById('activeCount').textContent = active;
+        document.getElementById('warningCount').textContent = warning;
+        document.getElementById('expiredCount').textContent = expired;
+      } catch(e) {}
+      delete window[cb];
+    };
+    const s = document.createElement('script');
+    s.src = url + `&callback=${cb}&tqx=responseHandler:${cb}`;
+    document.head.appendChild(s);
+  }
+
+  // ===== HISTORY =====
+  let allHistory = [];
+
+  function loadHistory() {
+    if (!SHEET_ID) { loadHistoryDemo(); return; }
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=Attendance&tq=select%20*`;
+    const cb = 'akHistCb_' + Date.now();
+    window[cb] = function(data) {
+      try {
+        allHistory = (data.table.rows || []).reverse().map(r => ({
+          date: r.c[0]?.f || r.c[0]?.v || '—',
+          time: r.c[1]?.v || '—',
+          id: r.c[2]?.v || '—',
+          name: r.c[3]?.v || '—',
+          status: r.c[4]?.v || '—'
+        }));
+        renderHistory(allHistory);
+      } catch(e) { loadHistoryDemo(); }
+      delete window[cb];
+    };
+    const s = document.createElement('script');
+    s.src = url + `&callback=${cb}&tqx=responseHandler:${cb}`;
+    document.head.appendChild(s);
+  }
+
+  function loadHistoryDemo() {
+    allHistory = [
+      { date: '11/03/2026', time: '06:01 PM', id: '42', name: 'John Mathew', status: 'Entry' },
+      { date: '11/03/2026', time: '05:58 PM', id: '17', name: 'Sara Ahmed', status: 'Exit' },
+      { date: '11/03/2026', time: '05:45 PM', id: '31', name: 'Mike Johnson', status: 'Entry' },
+      { date: '10/03/2026', time: '07:00 AM', id: '42', name: 'John Mathew', status: 'Entry' },
+      { date: '10/03/2026', time: '08:05 AM', id: '42', name: 'John Mathew', status: 'Exit' },
+    ];
+    renderHistory(allHistory);
+  }
+
+  function renderHistory(records) {
+    const grid = document.getElementById('historyGrid');
+    if (!records.length) { grid.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:40px;grid-column:1/-1;">No records found</div>'; return; }
+    const colors = ['#1a2a3a','#1a2a2a','#2a1a2a','#2a2a1a','#1a1a2a','#2a1a1a'];
+    grid.innerHTML = records.map((r, i) => `
+      <div class="history-card" style="border-color:${r.status === 'Entry' ? 'rgba(0,200,150,0.2)' : 'rgba(224,48,48,0.15)'}">
+        <div class="history-card-top">
+          <div class="history-name">${r.name}</div>
+          <span class="badge ${r.status === 'Entry' ? 'badge-green' : 'badge-red'}">${r.status}</span>
+        </div>
+        <div class="history-details">
+          <div class="history-row"><span>ID</span><span>#${r.id}</span></div>
+          <div class="history-row"><span>Date</span><span>${r.date}</span></div>
+          <div class="history-row"><span>Time</span><span>${r.time}</span></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function filterHistory() {
+    const dateVal = document.getElementById('historyDate').value;
+    const search = document.getElementById('historySearch').value.toLowerCase();
+    const status = document.getElementById('historyStatus').value;
+    let filtered = allHistory.filter(r => {
+      const matchDate = !dateVal || r.date === new Date(dateVal).toLocaleDateString('en-GB');
+      const matchSearch = !search || r.name.toLowerCase().includes(search) || String(r.id).includes(search);
+      const matchStatus = !status || r.status === status;
+      return matchDate && matchSearch && matchStatus;
+    });
+    renderHistory(filtered);
+  }
+
+  // ===== MEMBERS =====
+  let allMembers = [];
+
+  function loadMembers() {
+    if (!SHEET_ID) { loadMembersDemo(); return; }
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=Members&tq=select%20*`;
+    const cb = 'akMemCb_' + Date.now();
+    window[cb] = function(data) {
+      try {
+        allMembers = (data.table.rows || []).map(r => {
+          const expiry = r.c[3]?.f || r.c[3]?.v || '—';
+          const parts = expiry.split('/');
+          let statusClass = 'active', daysLeft = '—';
+          if (parts.length === 3) {
+            const expDate = new Date(parts[2], parts[1]-1, parts[0]);
+            const diff = Math.ceil((expDate - new Date()) / (1000*60*60*24));
+            daysLeft = diff;
+            if (diff <= 0) statusClass = 'expired';
+            else if (diff <= 7) statusClass = 'warning';
+          }
+          return {
+            name: r.c[0]?.v || '—',
+            contact: r.c[1]?.v || '—',
+            pkg: r.c[2]?.v || '—',
+            expiry,
+            status: r.c[4]?.v || '—',
+            createdOn: r.c[5]?.f || r.c[5]?.v || '—',
+            id: r.c[6]?.v || '—',
+            statusClass,
+            daysLeft
+          };
+        });
+        renderMembers(allMembers);
+      } catch(e) { loadMembersDemo(); }
+      delete window[cb];
+    };
+    const s = document.createElement('script');
+    s.src = url + `&callback=${cb}&tqx=responseHandler:${cb}`;
+    document.head.appendChild(s);
+  }
+
+  function loadMembersDemo() {
+    allMembers = [
+      { name: 'John Mathew', contact: '+971 50 123 4567', pkg: 'Monthly', expiry: '31/03/2026', id: '42', statusClass: 'active', daysLeft: 20 },
+      { name: 'Sara Ahmed', contact: '+971 55 987 6543', pkg: 'Monthly', expiry: '15/03/2026', id: '17', statusClass: 'warning', daysLeft: 4 },
+      { name: 'Mike Johnson', contact: '+971 52 456 7890', pkg: 'Quarterly', expiry: '30/06/2026', id: '31', statusClass: 'active', daysLeft: 111 },
+      { name: 'Riya Patel', contact: '+971 56 321 0987', pkg: 'Monthly', expiry: '05/03/2026', id: '8', statusClass: 'expired', daysLeft: -6 },
+    ];
+    renderMembers(allMembers);
+  }
+
+  function renderMembers(members) {
+    const grid = document.getElementById('membersGrid');
+    if (!members.length) { grid.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:40px;grid-column:1/-1;">No members found</div>'; return; }
+    const colors = { active: 'var(--accent-green)', warning: 'var(--accent-yellow)', expired: 'var(--accent-red)' };
+    grid.innerHTML = members.map(m => `
+      <div class="member-card" style="border-color:${colors[m.statusClass]}22">
+        <div class="member-card-top">
+          <div style="display:flex;align-items:center;gap:12px;flex:1">
+            <div class="member-avatar">${m.name.charAt(0)}</div>
+            <div class="member-info">
+              <div class="member-card-name">${m.name}</div>
+              <div class="member-card-id">ID: #${m.id}</div>
+            </div>
+          </div>
+          <span class="badge badge-${m.statusClass === 'active' ? 'green' : m.statusClass === 'warning' ? 'yellow' : 'red'}">${m.statusClass}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div class="history-row"><span style="color:var(--text-muted);font-size:11px;">Package</span><span style="font-size:12px;">${m.pkg}</span></div>
+          <div class="history-row"><span style="color:var(--text-muted);font-size:11px;">Expiry</span><span style="font-size:12px;">${m.expiry}</span></div>
+          <div class="history-row"><span style="color:var(--text-muted);font-size:11px;">Days Left</span><span style="font-size:12px;color:${colors[m.statusClass]}">${m.daysLeft > 0 ? m.daysLeft + ' days' : 'EXPIRED'}</span></div>
+          <div class="history-row"><span style="color:var(--text-muted);font-size:11px;">Contact</span><span style="font-size:12px;">${m.contact}</span></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function filterMembers() {
+    const search = document.getElementById('memberSearch').value.toLowerCase();
+    const filter = document.getElementById('memberFilter').value;
+    const filtered = allMembers.filter(m => {
+      const matchSearch = !search || m.name.toLowerCase().includes(search) || String(m.id).includes(search);
+      const matchFilter = !filter || m.statusClass === filter;
+      return matchSearch && matchFilter;
+    });
+    renderMembers(filtered);
+  }
+
+  // ===== WORKOUT =====
+  let allWorkouts = [];
+
+  function loadWorkout() {
+    if (!SHEET_ID) { loadWorkoutDemo(); return; }
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=Workouts&tq=select%20*`;
+    const cb = 'akWkCb_' + Date.now();
+    window[cb] = function(data) {
+      try {
+        allWorkouts = (data.table.rows || []).map(r => ({
+          memberId: r.c[0]?.v || '—',
+          name: r.c[1]?.v || '—',
+          planType: r.c[2]?.v || '—',
+          goal: r.c[3]?.v || '—',
+          day: r.c[4]?.v || '—',
+          exercise: r.c[5]?.v || '—',
+          sets: r.c[6]?.v || '—',
+          reps: r.c[7]?.v || '—',
+          rest: r.c[8]?.v || '—',
+          muscle: r.c[9]?.v || '—',
+          notes: r.c[10]?.v || '—'
+        }));
+        renderWorkout(allWorkouts);
+      } catch(e) { loadWorkoutDemo(); }
+      delete window[cb];
+    };
+    const s = document.createElement('script');
+    s.src = url + `&callback=${cb}&tqx=responseHandler:${cb}`;
+    document.head.appendChild(s);
+  }
+
+  function loadWorkoutDemo() {
+    allWorkouts = [
+      { memberId: '42', name: 'John Mathew', planType: 'Intermediate', goal: 'Muscle Gain', day: 'Monday', exercise: 'Bench Press', sets: '4', reps: '8-12', rest: '90s', muscle: 'Chest', notes: 'Keep form tight' },
+      { memberId: '42', name: 'John Mathew', planType: 'Intermediate', goal: 'Muscle Gain', day: 'Monday', exercise: 'Incline DB Press', sets: '3', reps: '10-12', rest: '60s', muscle: 'Chest', notes: '' },
+      { memberId: '17', name: 'Sara Ahmed', planType: 'Beginner', goal: 'Weight Loss', day: 'Tuesday', exercise: 'Squats', sets: '3', reps: '15', rest: '60s', muscle: 'Legs', notes: 'Focus on depth' },
+    ];
+    renderWorkout(allWorkouts);
+  }
+
+  function renderWorkout(workouts) {
+    const tbody = document.getElementById('workoutBody');
+    if (!workouts.length) { tbody.innerHTML = '<tr><td colspan="9" style="color:var(--text-muted);text-align:center;padding:40px;">No workouts found</td></tr>'; return; }
+    const planColors = { Beginner: 'badge-green', Intermediate: 'badge-yellow', Advanced: 'badge-red', Custom: 'badge' };
+    tbody.innerHTML = workouts.map(w => `
+      <tr>
+        <td><strong>${w.name}</strong><br><span style="color:var(--text-muted);font-size:11px;">#${w.memberId}</span></td>
+        <td><span class="badge ${planColors[w.planType] || 'badge'}">${w.planType}</span></td>
+        <td>${w.day}</td>
+        <td>${w.exercise}</td>
+        <td>${w.sets}</td>
+        <td>${w.reps}</td>
+        <td>${w.rest}</td>
+        <td>${w.muscle}</td>
+        <td style="color:var(--text-muted)">${w.notes}</td>
+      </tr>
+    `).join('');
+  }
+
+  function filterWorkout() {
+    const search = document.getElementById('workoutSearch').value.toLowerCase();
+    const plan = document.getElementById('workoutPlan').value;
+    const filtered = allWorkouts.filter(w => {
+      const matchSearch = !search || w.name.toLowerCase().includes(search) || String(w.memberId).includes(search);
+      const matchPlan = !plan || w.planType === plan;
+      return matchSearch && matchPlan;
+    });
+    renderWorkout(filtered);
+  }
+
+  // ===== NOTIFICATIONS =====
+  function loadNotifications() {
+    if (!SHEET_ID) { renderNotificationsDemo(); return; }
+    // Load members and find expiring/expired
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=Members&tq=select%20*`;
+    const cb = 'akNotifCb_' + Date.now();
+    window[cb] = function(data) {
+      try {
+        const rows = data.table.rows || [];
+        const notifs = [];
+        rows.forEach(r => {
+          const name = r.c[0]?.v || '—';
+          const expiry = r.c[3]?.f || r.c[3]?.v || '—';
+          const id = r.c[6]?.v || '—';
+          const parts = expiry.split('/');
+          if (parts.length === 3) {
+            const expDate = new Date(parts[2], parts[1]-1, parts[0]);
+            const diff = Math.ceil((expDate - new Date()) / (1000*60*60*24));
+            if (diff <= 0) notifs.push({ name, id, msg: `Membership expired ${Math.abs(diff)} days ago`, type: 'red' });
+            else if (diff <= 7) notifs.push({ name, id, msg: `Membership expiring in ${diff} days`, type: 'yellow' });
+          }
+        });
+        renderNotifications(notifs);
+      } catch(e) { renderNotificationsDemo(); }
+      delete window[cb];
+    };
+    const s = document.createElement('script');
+    s.src = url + `&callback=${cb}&tqx=responseHandler:${cb}`;
+    document.head.appendChild(s);
+  }
+
+  function renderNotificationsDemo() {
+    renderNotifications([
+      { name: 'Sara Ahmed', id: '17', msg: 'Membership expiring in 4 days', type: 'yellow' },
+      { name: 'Riya Patel', id: '8', msg: 'Membership expired 6 days ago', type: 'red' },
+    ]);
+  }
+
+  function renderNotifications(notifs) {
+    const list = document.getElementById('notifList');
+    if (!notifs.length) {
+      list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">🎉 No alerts — all memberships are good!</div>';
+      return;
+    }
+    const colors = { red: 'var(--accent-red)', yellow: 'var(--accent-yellow)' };
+    list.innerHTML = notifs.map(n => `
+      <div style="background:var(--bg-card);border:1px solid ${colors[n.type]}33;border-radius:var(--radius);padding:16px;display:flex;align-items:center;gap:14px;">
+        <div style="font-size:20px">${n.type === 'red' ? '🔴' : '🟡'}</div>
+        <div style="flex:1">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;">${n.name}</div>
+          <div style="font-size:12px;color:${colors[n.type]};margin-top:2px;">${n.msg}</div>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted)">ID: #${n.id}</div>
+      </div>
+    `).join('');
+  }
+
+  // ===== SETTINGS =====
+  function saveSettings() {
+    const sheetId = document.getElementById('settingSheetId').value.trim();
+    const scriptUrl = document.getElementById('settingScriptUrl').value.trim();
+    localStorage.setItem('ak_sheet_id', sheetId);
+    localStorage.setItem('ak_script_url', scriptUrl);
+    showToast('✅ Settings saved! Reload to apply.', 'success');
+  }
+
+  function savePassword() {
+    const pw = document.getElementById('settingPassword').value;
+    if (!pw) { showToast('Please enter a password', 'error'); return; }
+    localStorage.setItem('ak_admin_pw', pw);
+    showToast('✅ Password updated!', 'success');
+  }
+
+  // ===== INIT =====
+  loadDashboard('today');
+  setInterval(() => loadDashboard('today'), 8000);
+
+  function showToast(msg, type = 'success') {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    document.getElementById('toastContainer').appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+</script>
+</body>
+</html>

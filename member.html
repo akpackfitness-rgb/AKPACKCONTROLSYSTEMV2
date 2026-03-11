@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AK Pack Fitness — Member</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .member-page {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 14px;
+    animation: pageIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    z-index: 1;
+  }
+
+  @keyframes pageIn {
+    from { opacity: 0; transform: scale(0.96) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  /* Status glow bg */
+  .status-glow {
+    position: fixed;
+    top: -100px;
+    right: -100px;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.1;
+    pointer-events: none;
+  }
+
+  .status-glow.active { background: var(--accent-green); }
+  .status-glow.warning { background: var(--accent-yellow); }
+  .status-glow.expired { background: var(--accent-red); }
+
+  /* TOP BAR */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .back-btn:hover { color: white; }
+
+  .countdown-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+
+  .countdown-ring {
+    width: 28px;
+    height: 28px;
+    position: relative;
+  }
+
+  .countdown-ring svg {
+    transform: rotate(-90deg);
+  }
+
+  .countdown-ring circle {
+    fill: none;
+    stroke-width: 2.5;
+  }
+
+  .countdown-ring .bg { stroke: var(--border); }
+  .countdown-ring .progress { stroke: var(--accent-red); transition: stroke-dashoffset 1s linear; }
+
+  .countdown-num {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    color: var(--accent-red);
+  }
+
+  /* STATUS BAR */
+  .status-bar {
+    height: 4px;
+    border-radius: 2px;
+    width: 100%;
+  }
+  .status-bar.active { background: linear-gradient(90deg, var(--accent-green), rgba(0,200,150,0.3)); }
+  .status-bar.warning { background: linear-gradient(90deg, var(--accent-yellow), rgba(255,184,0,0.3)); }
+  .status-bar.expired { background: linear-gradient(90deg, var(--accent-red), rgba(224,48,48,0.3)); }
+
+  /* ROW 1: Details + Calendar */
+  .row1 {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 14px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* MEMBER DETAILS CARD */
+  .details-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .member-greeting {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 0.05em;
+    line-height: 1;
+  }
+
+  .member-greeting span { color: var(--accent-red); }
+
+  .member-sub {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: -6px;
+  }
+
+  .details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    flex: 1;
+  }
+
+  .detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .detail-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .detail-value {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  /* CALENDAR CARD */
+  .calendar-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .cal-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  .cal-month {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  .cal-days-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    text-align: center;
+  }
+
+  .cal-day-label {
+    font-size: 8px;
+    color: var(--text-muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 0.05em;
+    padding: 2px 0;
+  }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    flex: 1;
+  }
+
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 9px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.2s;
+  }
+
+  .cal-day.attended {
+    background: rgba(0,200,150,0.2);
+    color: var(--accent-green);
+    border: 1px solid rgba(0,200,150,0.3);
+  }
+
+  .cal-day.today {
+    background: var(--accent-red);
+    color: white;
+    box-shadow: 0 0 8px rgba(224,48,48,0.4);
+  }
+
+  .cal-day.empty { opacity: 0; }
+
+  /* ROW 2: Session Timer + Stats */
+  .row2 {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 14px;
+  }
+
+  /* SESSION TIMER */
+  .timer-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .timer-ring-wrap {
+    position: relative;
+    width: 90px;
+    height: 90px;
+  }
+
+  .timer-ring-wrap svg {
+    transform: rotate(-90deg);
+    width: 100%;
+    height: 100%;
+  }
+
+  .timer-ring-wrap circle {
+    fill: none;
+    stroke-width: 5;
+  }
+
+  .timer-ring-bg { stroke: var(--border); }
+  .timer-ring-progress {
+    stroke: var(--accent-green);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear, stroke 0.3s;
+  }
+
+  .timer-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .timer-time {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.05em;
+    line-height: 1;
+  }
+
+  .timer-label {
+    font-size: 8px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .timer-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .timer-card-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  /* STATS CARD */
+  .stats-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    align-content: center;
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .stat-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 0.03em;
+    line-height: 1;
+    color: var(--accent-red);
+  }
+
+  .stat-sub {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    .row1 { grid-template-columns: 1fr; }
+    .row2 { grid-template-columns: 1fr 1fr; }
+    .details-grid { grid-template-columns: 1fr 1fr; }
+    .member-greeting { font-size: 24px; }
+    .stats-card { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="status-glow" id="statusGlow"></div>
+
+<div class="member-page">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <a href="index.html" class="back-btn">← Back</a>
+    <div class="countdown-wrap">
+      <span>Auto close</span>
+      <div class="countdown-ring" id="countdownRing">
+        <svg viewBox="0 0 28 28">
+          <circle class="bg" cx="14" cy="14" r="11"/>
+          <circle class="progress" id="countdownCircle" cx="14" cy="14" r="11"
+            stroke-dasharray="69.1"
+            stroke-dashoffset="0"/>
+        </svg>
+        <div class="countdown-num" id="countdownNum">5</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar" id="statusBar"></div>
+
+  <!-- ROW 1: Details + Calendar -->
+  <div class="row1">
+
+    <!-- Member Details -->
+    <div class="details-card">
+      <div>
+        <div class="member-greeting" id="greeting">Welcome, <span id="memberName">—</span>! 🐺</div>
+        <div class="member-sub" id="memberSub">Loading details...</div>
+      </div>
+      <div class="details-grid">
+        <div class="detail-item">
+          <div class="detail-label">Member ID</div>
+          <div class="detail-value" id="detailId">—</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Package</div>
+          <div class="detail-value" id="detailPackage">—</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Expiry Date</div>
+          <div class="detail-value" id="detailExpiry">—</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Days Remaining</div>
+          <div class="detail-value" id="detailDays">—</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Status</div>
+          <div class="detail-value" id="detailStatus">—</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Contact</div>
+          <div class="detail-value" id="detailContact">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attendance Calendar -->
+    <div class="calendar-card">
+      <div class="cal-header">
+        <div class="cal-title">📅 Attendance</div>
+        <div class="cal-month" id="calMonth">—</div>
+      </div>
+      <div class="cal-days-header">
+        <div class="cal-day-label">M</div>
+        <div class="cal-day-label">T</div>
+        <div class="cal-day-label">W</div>
+        <div class="cal-day-label">T</div>
+        <div class="cal-day-label">F</div>
+        <div class="cal-day-label">S</div>
+        <div class="cal-day-label">S</div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+
+  <!-- ROW 2: Timer + Stats -->
+  <div class="row2">
+
+    <!-- Session Timer -->
+    <div class="timer-card">
+      <div class="timer-card-label">🕐 Session</div>
+      <div class="timer-ring-wrap">
+        <svg viewBox="0 0 90 90">
+          <circle class="timer-ring-bg" cx="45" cy="45" r="38"/>
+          <circle class="timer-ring-progress" id="timerRing" cx="45" cy="45" r="38"
+            stroke-dasharray="238.76"
+            stroke-dashoffset="238.76"/>
+        </svg>
+        <div class="timer-center">
+          <div class="timer-time" id="timerDisplay">00:00</div>
+          <div class="timer-label">Session</div>
+        </div>
+      </div>
+      <div class="timer-status">
+        <span class="live-dot" id="timerDot"></span>
+        <span id="timerStatusText">Recording</span>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-card">
+      <div class="stat-item">
+        <div class="stat-label">🔥 Streak</div>
+        <div class="stat-value" id="statStreak">0</div>
+        <div class="stat-sub">days in a row</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">📅 This Month</div>
+        <div class="stat-value" id="statMonth">0</div>
+        <div class="stat-sub">visits</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">🏋️ Total Visits</div>
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-sub">all time</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">⏱️ Avg Session</div>
+        <div class="stat-value" id="statAvg">—</div>
+        <div class="stat-sub">minutes</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  const SHEET_ID = localStorage.getItem('ak_sheet_id') || '';
+  const SCRIPT_URL = localStorage.getItem('ak_script_url') || '';
+  const memberId = sessionStorage.getItem('ak_member_id') || '';
+  const mode = sessionStorage.getItem('ak_mode') || 'entry';
+
+  if (!memberId) window.location.href = 'index.html';
+
+  // ===== COUNTDOWN =====
+  let countdown = 5;
+  const circumference = 69.1;
+
+  function updateCountdown() {
+    const circle = document.getElementById('countdownCircle');
+    const num = document.getElementById('countdownNum');
+    const offset = circumference * (1 - countdown / 5);
+    circle.style.strokeDashoffset = offset;
+    num.textContent = countdown;
+    countdown--;
+    if (countdown < 0) window.location.href = 'index.html';
+  }
+
+  updateCountdown();
+  const countdownInterval = setInterval(updateCountdown, 1000);
+
+  // ===== SESSION TIMER =====
+  const SESSION_GOAL = 60 * 60; // 60 minutes in seconds
+  let sessionSeconds = 0;
+  let sessionInterval;
+  const timerRing = document.getElementById('timerRing');
+  const timerDisplay = document.getElementById('timerDisplay');
+  const timerDot = document.getElementById('timerDot');
+  const timerStatusText = document.getElementById('timerStatusText');
+  const ringCircumference = 238.76;
+
+  function startTimer() {
+    // Check if member was already inside (get entry time from session storage)
+    const entryTime = sessionStorage.getItem(`ak_entry_${memberId}`);
+    if (entryTime && mode === 'exit') {
+      const elapsed = Math.floor((Date.now() - parseInt(entryTime)) / 1000);
+      sessionSeconds = elapsed;
+    } else if (mode === 'entry') {
+      sessionStorage.setItem(`ak_entry_${memberId}`, Date.now());
+      sessionSeconds = 0;
+    }
+
+    updateTimerDisplay();
+
+    if (mode === 'exit') {
+      timerDot.style.background = 'var(--accent-red)';
+      timerStatusText.textContent = 'Session ended';
+      timerDot.style.animation = 'none';
+      timerDot.style.opacity = '0.5';
+      updateTimerDisplay();
+      return;
+    }
+
+    sessionInterval = setInterval(() => {
+      sessionSeconds++;
+      updateTimerDisplay();
+    }, 1000);
+  }
+
+  function updateTimerDisplay() {
+    const mins = Math.floor(sessionSeconds / 60);
+    const secs = sessionSeconds % 60;
+    timerDisplay.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+
+    const progress = Math.min(sessionSeconds / SESSION_GOAL, 1);
+    const offset = ringCircumference * (1 - progress);
+    timerRing.style.strokeDashoffset = offset;
+  }
+
+  // ===== RENDER CALENDAR =====
+  function renderCalendar(attendedDays) {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    document.getElementById('calMonth').textContent = monthNames[month];
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const startOffset = (firstDay + 6) % 7; // Monday start
+
+    const grid = document.getElementById('calGrid');
+    grid.innerHTML = '';
+
+    // Empty cells
+    for (let i = 0; i < startOffset; i++) {
+      const empty = document.createElement('div');
+      empty.className = 'cal-day empty';
+      grid.appendChild(empty);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const cell = document.createElement('div');
+      const dateStr = `${String(d).padStart(2,'0')}/${String(month+1).padStart(2,'0')}/${year}`;
+      const isToday = d === now.getDate();
+      const attended = attendedDays.includes(dateStr);
+
+      cell.className = 'cal-day' + (isToday ? ' today' : attended ? ' attended' : '');
+      cell.textContent = d;
+      grid.appendChild(cell);
+    }
+  }
+
+  // ===== LOAD MEMBER =====
+  function loadMember() {
+    if (!SHEET_ID) {
+      showDemoMember();
+      return;
+    }
+
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=Members&tq=select%20*`;
+    const cb = 'akMemberCb_' + Date.now();
+    window[cb] = function(data) {
+      try {
+        const rows = data.table.rows || [];
+        const member = rows.find(r => String(r.c[6]?.v || r.c[6]?.f || '').trim() === String(memberId).trim());
+        if (!member) {
+          showToast('❌ Member ID not found', 'error');
+          setTimeout(() => window.location.href = 'numpad.html?mode=' + mode, 2000);
+          return;
+        }
+
+        const name = member.c[0]?.v || '—';
+        const contact = member.c[1]?.v || '—';
+        const pkg = member.c[2]?.v || '—';
+        const expiry = member.c[3]?.f || member.c[3]?.v || '—';
+        const createdOn = member.c[5]?.f || member.c[5]?.v || '—';
+
+        // Calculate days remaining
+        const parts = expiry.split('/');
+        let daysLeft = '—';
+        let statusClass = 'active';
+        if (parts.length === 3) {
+          const expDate = new Date(parts[2], parts[1]-1, parts[0]);
+          const diff = Math.ceil((expDate - new Date()) / (1000*60*60*24));
+          daysLeft = diff > 0 ? diff : 0;
+          if (diff <= 0) statusClass = 'expired';
+          else if (diff <= 7) statusClass = 'warning';
+        }
+
+        renderMember({ name, contact, pkg, expiry, createdOn, daysLeft, statusClass });
+        loadAttendance(name, statusClass);
+        logAttendance(memberId, name);
+
+      } catch(e) {
+        console.error('[AK Member] Error:', e);
+        showDemoMember();
+      }
+      delete window[cb];
+    };
+
+    const script = document.createElement('script');
+    script.src = url + `&callback=${cb}&tqx=responseHandler:${cb}`;
+    document.head.appendChild(script);
+  }
+
+  function renderMember({ name, contact, pkg, expiry, daysLeft, statusClass }) {
+    document.getElementById('memberName').textContent = name.split(' ')[0];
+    document.getElementById('memberSub').textContent = mode === 'entry' ? "Let's crush it today! 💪" : "Great session today! 🐺";
+    document.getElementById('detailId').textContent = '#' + memberId;
+    document.getElementById('detailPackage').textContent = pkg;
+    document.getElementById('detailExpiry').textContent = expiry;
+    document.getElementById('detailDays').textContent = daysLeft + ' days';
+    document.getElementById('detailContact').textContent = contact;
+
+    const statusEl = document.getElementById('detailStatus');
+    const statusBar = document.getElementById('statusBar');
+    const statusGlow = document.getElementById('statusGlow');
+    const timerRingEl = document.getElementById('timerRing');
+
+    statusEl.className = '';
+    statusBar.className = 'status-bar ' + statusClass;
+    statusGlow.className = 'status-glow ' + statusClass;
+
+    if (statusClass === 'active') {
+      statusEl.innerHTML = '<span style="color:var(--accent-green)">🟢 Active</span>';
+      timerRingEl.style.stroke = 'var(--accent-green)';
+    } else if (statusClass === 'warning') {
+      statusEl.innerHTML = '<span style="color:var(--accent-yellow)">🟡 Expiring Soon</span>';
+      timerRingEl.style.stroke = 'var(--accent-yellow)';
+    } else {
+      statusEl.innerHTML = '<span style="color:var(--accent-red)">🔴 Expired</span>';
+      timerRingEl.style.stroke = 'var(--accent-red)';
+    }
+
+    console.log('[AK Stats] Member loaded:', name, 'Status:', statusClass);
+  }
+
+  function loadAttendance(memberName, statusClass) {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=Attendance&tq=select%20*`;
+    const cb = 'akAttCb_' + Date.now();
+    window[cb] = function(data) {
+      try {
+        const rows = data.table.rows || [];
+        const memberRows = rows.filter(r =>
+          String(r.c[2]?.v || '').trim() === String(memberId).trim() ||
+          String(r.c[3]?.v || '').toLowerCase() === memberName.toLowerCase()
+        );
+
+        const attendedDays = [...new Set(memberRows.filter(r => r.c[4]?.v === 'Entry').map(r => r.c[0]?.f || r.c[0]?.v || ''))];
+        const thisMonth = new Date().getMonth();
+        const monthVisits = attendedDays.filter(d => {
+          const parts = d.split('/');
+          return parts.length === 3 && parseInt(parts[1]) - 1 === thisMonth;
+        }).length;
+
+        // Streak calc
+        let streak = 0;
+        const today = new Date();
+        for (let i = 0; i < 60; i++) {
+          const d = new Date(today);
+          d.setDate(d.getDate() - i);
+          const ds = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+          if (attendedDays.includes(ds)) streak++;
+          else if (i > 0) break;
+        }
+
+        document.getElementById('statStreak').textContent = streak;
+        document.getElementById('statMonth').textContent = monthVisits;
+        document.getElementById('statTotal').textContent = attendedDays.length;
+
+        renderCalendar(attendedDays);
+      } catch(e) { renderCalendar([]); }
+      delete window[cb];
+    };
+    const script = document.createElement('script');
+    script.src = url + `&callback=${cb}&tqx=responseHandler:${cb}`;
+    document.head.appendChild(script);
+  }
+
+  function logAttendance(id, name) {
+    if (!SCRIPT_URL) return;
+    const now = new Date();
+    const date = now.toLocaleDateString('en-GB');
+    const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const status = mode === 'entry' ? 'Entry' : 'Exit';
+    const payload = { sheet: 'Attendance', row: [date, time, id, name, status] };
+    const cbName = 'akWriteCb_' + Date.now();
+    window[cbName] = function(res) {
+      console.log('[AK Write] Attendance logged:', res);
+      delete window[cbName];
+    };
+    const s = document.createElement('script');
+    s.src = `${SCRIPT_URL}?data=${encodeURIComponent(JSON.stringify(payload))}&callback=${cbName}`;
+    document.head.appendChild(s);
+  }
+
+  function showDemoMember() {
+    renderMember({
+      name: 'John Mathew',
+      contact: '+971 50 123 4567',
+      pkg: 'Monthly',
+      expiry: '31/03/2026',
+      daysLeft: 20,
+      statusClass: 'active'
+    });
+    renderCalendar(['01/03/2026','03/03/2026','04/03/2026','06/03/2026','08/03/2026','10/03/2026','11/03/2026']);
+    document.getElementById('statStreak').textContent = '5';
+    document.getElementById('statMonth').textContent = '7';
+    document.getElementById('statTotal').textContent = '142';
+    document.getElementById('statAvg').textContent = '52';
+  }
+
+  function showToast(msg, type = 'success') {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    document.getElementById('toastContainer').appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  // Init
+  loadMember();
+  startTimer();
+</script>
+</body>
+</html>

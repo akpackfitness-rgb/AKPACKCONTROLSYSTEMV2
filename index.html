@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AK Pack Fitness — Check In</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--topbar-height);
+    background: rgba(11,15,30,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .logo-icon {
+    width: 38px;
+    height: 38px;
+    background: var(--accent-red);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: var(--shadow-glow-red);
+  }
+
+  .logo-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.08em;
+  }
+
+  .logo-sub {
+    font-size: 10px;
+    color: var(--text-secondary);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: -2px;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .live-time {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.05em;
+  }
+
+  .admin-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .admin-btn:hover {
+    border-color: var(--accent-red);
+    color: var(--accent-red);
+  }
+
+  /* ===== MAIN LAYOUT ===== */
+  .main {
+    position: fixed;
+    top: var(--topbar-height);
+    left: 0; right: 0; bottom: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr auto;
+    gap: 16px;
+    padding: 16px;
+    z-index: 1;
+  }
+
+  /* LEFT COLUMN */
+  .left-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ENTRY EXIT BUTTONS */
+  .action-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    flex: 1;
+  }
+
+  .action-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    text-decoration: none;
+    color: var(--text-primary);
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .action-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+    border-radius: inherit;
+  }
+
+  .action-btn.entry::before {
+    background: radial-gradient(circle at center, rgba(0,200,150,0.15) 0%, transparent 70%);
+  }
+
+  .action-btn.exit::before {
+    background: radial-gradient(circle at center, rgba(224,48,48,0.15) 0%, transparent 70%);
+  }
+
+  .action-btn:hover::before { opacity: 1; }
+
+  .action-btn.entry:hover {
+    border-color: var(--accent-green);
+    box-shadow: 0 0 30px rgba(0,200,150,0.2), inset 0 0 30px rgba(0,200,150,0.05);
+    transform: translateY(-3px) scale(1.01);
+  }
+
+  .action-btn.exit:hover {
+    border-color: var(--accent-red);
+    box-shadow: 0 0 30px rgba(224,48,48,0.2), inset 0 0 30px rgba(224,48,48,0.05);
+    transform: translateY(-3px) scale(1.01);
+  }
+
+  .action-btn:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  .action-icon {
+    font-size: 42px;
+    line-height: 1;
+    filter: drop-shadow(0 0 12px currentColor);
+  }
+
+  .action-btn.entry .action-icon { color: var(--accent-green); }
+  .action-btn.exit .action-icon { color: var(--accent-red); }
+
+  .action-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 0.12em;
+  }
+
+  .action-btn.entry .action-label { color: var(--accent-green); }
+  .action-btn.exit .action-label { color: var(--accent-red); }
+
+  .action-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Breathing animation */
+  .action-btn.entry {
+    animation: breatheGreen 3s ease-in-out infinite;
+  }
+
+  .action-btn.exit {
+    animation: breatheRed 3s ease-in-out infinite;
+    animation-delay: 1.5s;
+  }
+
+  @keyframes breatheGreen {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0,200,150,0); }
+    50% { box-shadow: 0 0 20px 2px rgba(0,200,150,0.1); }
+  }
+
+  @keyframes breatheRed {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(224,48,48,0); }
+    50% { box-shadow: 0 0 20px 2px rgba(224,48,48,0.1); }
+  }
+
+  /* RIGHT COLUMN */
+  .right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* PEAK HOURS GRAPH */
+  .graph-card {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .graph-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .day-pills {
+    display: flex;
+    gap: 4px;
+  }
+
+  .day-pill {
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    background: transparent;
+    transition: all 0.2s;
+  }
+
+  .day-pill.active {
+    background: var(--accent-red);
+    border-color: var(--accent-red);
+    color: white;
+  }
+
+  .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 80px;
+    padding-top: 8px;
+  }
+
+  .bar-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  .bar {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    background: rgba(224,48,48,0.25);
+    transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s;
+    cursor: pointer;
+    min-height: 4px;
+  }
+
+  .bar.peak {
+    background: var(--accent-red);
+    box-shadow: 0 0 10px rgba(224,48,48,0.4);
+  }
+
+  .bar:hover { background: var(--accent-red); }
+
+  .bar-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 0.04em;
+  }
+
+  /* MINI STATS */
+  .mini-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+
+  .mini-stat {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    text-align: center;
+  }
+
+  .mini-stat-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+
+  .mini-stat-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .stat-inside .mini-stat-value { color: var(--accent-green); }
+  .stat-checkins .mini-stat-value { color: var(--accent-red); }
+  .stat-exits .mini-stat-value { color: var(--text-secondary); }
+
+  /* PACK FEED */
+  .pack-feed {
+    grid-column: 1 / -1;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 56px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .pack-feed-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 8px rgba(224,48,48,0.5));
+  }
+
+  .pack-feed-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: 0.03em;
+    flex: 1;
+    transition: opacity 0.5s, transform 0.5s;
+  }
+
+  .pack-feed-text.fade-out {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  .pack-feed-text.fade-in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .pack-feed-dots {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .feed-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--border-hover);
+    transition: background 0.3s;
+  }
+
+  .feed-dot.active {
+    background: var(--accent-red);
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 900px) {
+    .main {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr auto auto;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .main {
+      position: relative;
+      top: var(--topbar-height);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 12px;
+      overflow-y: auto;
+      height: calc(100vh - var(--topbar-height));
+    }
+
+    .action-grid {
+      min-height: 180px;
+    }
+
+    .action-icon { font-size: 32px; }
+    .action-label { font-size: 22px; }
+
+    .right-col { order: -1; }
+
+    .bar-chart { height: 60px; }
+
+    .pack-feed { grid-column: auto; }
+
+    .logo-sub { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo" id="logoClick">
+    <div class="logo-icon">🐺</div>
+    <div>
+      <div class="logo-text">AK Pack Fitness</div>
+      <div class="logo-sub">Member Check-In Terminal</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span class="live-dot"></span>
+      <span class="live-time" id="liveTime">--:-- --</span>
+    </div>
+    <a href="admin.html" class="admin-btn" id="adminBtn">⚙️ Admin</a>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="main">
+
+  <!-- LEFT: ENTRY / EXIT -->
+  <div class="left-col">
+    <div class="action-grid">
+      <a href="numpad.html?mode=entry" class="action-btn entry">
+        <div class="action-icon">✅</div>
+        <div class="action-label">Entry</div>
+        <div class="action-sub">Tap to check in</div>
+      </a>
+      <a href="numpad.html?mode=exit" class="action-btn exit">
+        <div class="action-icon">🚪</div>
+        <div class="action-label">Exit</div>
+        <div class="action-sub">Tap to check out</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- RIGHT: GRAPH + STATS -->
+  <div class="right-col">
+    <!-- Peak Hours Graph -->
+    <div class="card graph-card">
+      <div class="graph-header">
+        <div class="card-title">📊 Peak Hours</div>
+        <div class="day-pills">
+          <button class="day-pill active" onclick="setDay(this,'Mon')">Mon</button>
+          <button class="day-pill" onclick="setDay(this,'Tue')">Tue</button>
+          <button class="day-pill" onclick="setDay(this,'Wed')">Wed</button>
+          <button class="day-pill" onclick="setDay(this,'Thu')">Thu</button>
+          <button class="day-pill" onclick="setDay(this,'Fri')">Fri</button>
+          <button class="day-pill" onclick="setDay(this,'Sat')">Sat</button>
+        </div>
+      </div>
+      <div class="bar-chart" id="barChart"></div>
+    </div>
+
+    <!-- Mini Stats -->
+    <div class="mini-stats">
+      <div class="mini-stat stat-inside">
+        <div class="mini-stat-value" id="insideCount">0</div>
+        <div class="mini-stat-label">Inside Now</div>
+      </div>
+      <div class="mini-stat stat-checkins">
+        <div class="mini-stat-value" id="checkinCount">0</div>
+        <div class="mini-stat-label">Check-ins</div>
+      </div>
+      <div class="mini-stat stat-exits">
+        <div class="mini-stat-value" id="exitCount">0</div>
+        <div class="mini-stat-label">Exits Today</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PACK FEED (full width bottom) -->
+  <div class="pack-feed">
+    <div class="pack-feed-icon">🐺</div>
+    <div class="pack-feed-text fade-in" id="packFeedText">Loading pack message...</div>
+    <div class="pack-feed-dots" id="feedDots"></div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  // ===== CONFIG =====
+  const SHEET_ID = localStorage.getItem('ak_sheet_id') || '';
+  const SCRIPT_URL = localStorage.getItem('ak_script_url') || '';
+
+  // ===== CLOCK =====
+  function updateClock() {
+    const now = new Date();
+    let h = now.getHours();
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    document.getElementById('liveTime').textContent = `${h}:${m} ${ampm}`;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ===== PACK FEED =====
+  const packMessages = [
+    "🐺 The wolf on the hill is not as hungry as the wolf climbing it.",
+    "💪 Every rep is a step closer to the pack leader.",
+    "🔥 Pain is temporary. Pride is forever. Keep pushing.",
+    "🐺 A wolf doesn't lose sleep over the opinion of sheep.",
+    "⚡ Your only competition is who you were yesterday.",
+    "🏋️ Iron sharpens iron. The pack makes you stronger.",
+    "🐺 Consistency beats intensity. Show up every day.",
+    "💥 The body achieves what the mind believes.",
+    "🔥 Sweat is just your fat crying. Keep going.",
+    "🐺 Train like a wolf. Recover like a champion.",
+    "⚡ Fitness Tip: Hydrate before, during and after every session!",
+    "💡 Did you know? 30 mins of strength training burns up to 300 calories.",
+  ];
+
+  let feedIndex = 0;
+  const feedText = document.getElementById('packFeedText');
+  const feedDots = document.getElementById('feedDots');
+
+  // Create dots
+  packMessages.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'feed-dot' + (i === 0 ? ' active' : '');
+    feedDots.appendChild(dot);
+  });
+
+  function updateFeed() {
+    feedText.classList.remove('fade-in');
+    feedText.classList.add('fade-out');
+    setTimeout(() => {
+      feedIndex = (feedIndex + 1) % packMessages.length;
+      feedText.textContent = packMessages[feedIndex];
+      feedText.classList.remove('fade-out');
+      feedText.classList.add('fade-in');
+      document.querySelectorAll('.feed-dot').forEach((d, i) => {
+        d.classList.toggle('active', i === feedIndex);
+      });
+    }, 500);
+  }
+
+  feedText.textContent = packMessages[0];
+  setInterval(updateFeed, 8000);
+
+  // ===== BAR CHART =====
+  const hours = ['6AM','7AM','8AM','9AM','10AM','11AM','12PM','1PM','2PM','3PM','4PM','5PM','6PM','7PM','8PM','9PM'];
+  const sampleData = {
+    Mon: [2,5,8,12,9,7,6,8,10,14,18,22,19,15,12,8],
+    Tue: [1,4,7,10,8,6,5,7,9,13,17,20,18,14,11,7],
+    Wed: [3,6,9,13,10,8,7,9,11,15,19,23,20,16,13,9],
+    Thu: [2,5,8,11,9,7,6,8,10,14,18,21,19,15,12,8],
+    Fri: [4,7,10,14,11,9,8,10,12,16,20,24,21,17,14,10],
+    Sat: [8,14,20,18,15,12,10,8,7,6,5,4,3,2,1,0],
+  };
+
+  function renderChart(day) {
+    const data = sampleData[day] || sampleData['Mon'];
+    const max = Math.max(...data);
+    const chart = document.getElementById('barChart');
+    chart.innerHTML = '';
+    data.forEach((val, i) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'bar-wrap';
+      const bar = document.createElement('div');
+      bar.className = 'bar' + (val === max ? ' peak' : '');
+      bar.style.height = `${(val/max)*100}%`;
+      const label = document.createElement('div');
+      label.className = 'bar-label';
+      label.textContent = i % 2 === 0 ? hours[i] : '';
+      wrap.appendChild(bar);
+      wrap.appendChild(label);
+      chart.appendChild(wrap);
+    });
+  }
+
+  function setDay(el, day) {
+    document.querySelectorAll('.day-pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    renderChart(day);
+  }
+
+  renderChart('Mon');
+
+  // ===== LOAD STATS =====
+  function loadStats() {
+    if (!SHEET_ID) return;
+    const today = new Date().toLocaleDateString('en-GB');
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=Attendance&tq=select%20*`;
+    const script = document.createElement('script');
+    const cb = 'akStatsCallback_' + Date.now();
+    window[cb] = function(data) {
+      try {
+        const rows = data.table.rows || [];
+        let checkins = 0, exits = 0, inside = 0;
+        const insideSet = new Set();
+        rows.forEach(row => {
+          const date = row.c[0]?.f || row.c[0]?.v || '';
+          const status = row.c[4]?.v || '';
+          if (date === today || date.includes(today)) {
+            if (status === 'Entry') { checkins++; insideSet.add(row.c[2]?.v); }
+            if (status === 'Exit') { exits++; insideSet.delete(row.c[2]?.v); }
+          }
+        });
+        inside = insideSet.size;
+        document.getElementById('checkinCount').textContent = checkins;
+        document.getElementById('exitCount').textContent = exits;
+        document.getElementById('insideCount').textContent = inside;
+        console.log('[AK Stats] Loaded:', {checkins, exits, inside});
+      } catch(e) { console.error('[AK Stats] Error:', e); }
+      delete window[cb];
+    };
+    script.src = url + `&callback=${cb}&tqx=responseHandler:${cb}`;
+    document.head.appendChild(script);
+  }
+
+  loadStats();
+  setInterval(loadStats, 30000);
+
+  // ===== LOGO TAP (5x for admin) =====
+  let logoTaps = 0, logoTimer;
+  document.getElementById('logoClick').addEventListener('click', () => {
+    logoTaps++;
+    clearTimeout(logoTimer);
+    logoTimer = setTimeout(() => logoTaps = 0, 2000);
+    if (logoTaps >= 5) { window.location.href = 'admin.html'; }
+  });
+
+  // ===== MIDNIGHT RESET =====
+  function checkMidnight() {
+    const now = new Date();
+    if (now.getHours() === 0 && now.getMinutes() === 0) loadStats();
+  }
+  setInterval(checkMidnight, 60000);
+
+  // ===== SETUP CHECK =====
+  if (!SHEET_ID || !SCRIPT_URL) {
+    setTimeout(() => {
+      showToast('⚙️ Setup required — visit Admin > Settings', 'error');
+    }, 2000);
+  }
+
+  function showToast(msg, type = 'success') {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    document.getElementById('toastContainer').appendChild(t);
+    setTimeout(() => t.remove(), 4000);
+  }
+</script>
+</body>
+</html>
